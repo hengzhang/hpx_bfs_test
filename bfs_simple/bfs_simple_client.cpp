@@ -68,8 +68,8 @@ int hpx_main(boost::program_options::variables_map& vm){
       }
     }
     hpx::components::distributing_factory factory;
-    factory.create(hpx::applier::get_applier().get_runtime_support_gid());  
-    //factory.create(hpx::find_here());
+ //   factory.create(hpx::applier::get_applier().get_runtime_support_gid());  
+    factory.create(hpx::find_here());
   //  std::vector<hpx::id_type> localities = hpx::find_all_localities();   
 
 
@@ -89,7 +89,7 @@ int hpx_main(boost::program_options::variables_map& vm){
       points[i].init(i, node_neighbors[i]);
     }
 
-    std::vector<hpx::lcos::promise<std::vector<std::size_t> > > traverse_phase;
+    std::vector<hpx::lcos::future<std::vector<std::size_t> > > traverse_phase;
     std::size_t level = 0; 
     std::size_t parent = 9999; 
     std::vector<std::vector<std::size_t> > parents;

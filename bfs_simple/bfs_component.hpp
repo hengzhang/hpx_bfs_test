@@ -31,7 +31,6 @@ namespace bfs_simple{
       private:
         std::size_t id;
         std::vector<std::size_t> neighbors;
-        std::size_t level;
         std::size_t parent;
         bool visited;
         
@@ -71,12 +70,12 @@ namespace bfs_simple{
      static void init(hpx::naming::id_type gid,std::size_t id_in, std::vector<std::size_t> neighbors_in){
       hpx::apply<server::point::init_action>(gid,id_in, neighbors_in); 
      } 
-     static  hpx::lcos::promise<std::vector<std::size_t> > traverse_async(hpx::naming::id_type const& gid_in, std::size_t level_in, std::size_t parent_in){
+     static  hpx::lcos::future<std::vector<std::size_t> > traverse_async(hpx::naming::id_type const& gid_in, std::size_t level_in, std::size_t parent_in){
        typedef server::point::traverse_action action_type;
-       return  hpx::lcos::packaged_action<action_type>(gid_in, level_in, parent_in);
+       return  hpx::async<action_type>(gid_in, level_in, parent_in);
      }
      static  std::vector<std::size_t> traverse(hpx::naming::id_type const& gid_in, std::size_t level_in, std::size_t parent_in){
-       return traverse_async(gid_in, level_in, parent_in).get_future().get();
+       return traverse_async(gid_in, level_in, parent_in).get();
      }
    };
   }
@@ -98,7 +97,7 @@ namespace bfs_simple{
     this->base_type::init(this->get_gid(),id_in, neighbors_in);
    }
 
-   hpx::lcos::promise<std::vector<std::size_t> > traverse_async(std::size_t level_in, std::size_t parent_in){
+   hpx::lcos::future<std::vector<std::size_t> > traverse_async(std::size_t level_in, std::size_t parent_in){
      HPX_ASSERT(this->get_gid()); 
      return this->base_type::traverse_async(this->get_gid(), level_in, parent_in);
    }

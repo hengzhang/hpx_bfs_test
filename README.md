@@ -23,4 +23,10 @@ bfs_localities
 ---------------
 A multi-localities using Parallel 2D top-down algorithm.
 
-
+    <b>Input</b> G:graph represented by a boolean sparse adjacency matrix, r: source vertex id
+    <b>Output</b> p: dense vector, where p[v] is the predecessor vertex on shortest path from s to v, or -1 if v is unreachable
+    1: p(:) <- -1, p(s) <- s
+    2: f(s) <- s      //f is the current frontier
+    3: for all locality L(i, j) in paralle do
+    4: while f is not NULL do
+    5: TRANSPOSEVECTOR(fij)

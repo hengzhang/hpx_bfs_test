@@ -1,7 +1,7 @@
 The BFS algorithm using HPX API
 ============
 
-The bfs algorithm implemented using hpx API.
+**The** bfs algorithm implemented using hpx API.
 
 bfs_simple
 ------------

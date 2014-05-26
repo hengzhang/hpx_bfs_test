@@ -1,7 +1,7 @@
 The BFS algorithm using HPX API
 ============
 
-**The** bfs algorithm implemented using hpx API.
+The bfs algorithm implemented using hpx API.
 
 bfs_simple
 ------------
@@ -23,8 +23,8 @@ bfs_localities
 ---------------
 A multi-localities using Parallel 2D top-down algorithm.
 
-    **Input** G:graph represented by a boolean sparse adjacency matrix, r: source vertex id
-    **Output** p: dense vector, where p[v] is the predecessor vertex on shortest path from s to v, or -1 if v is unreachable
+    **Input G:graph represented by a boolean sparse adjacency matrix, r: source vertex id
+    **Output  p: dense vector, where p[v] is the predecessor vertex on shortest path from s to v, or -1 if v is unreachable
     1: p(:) <- -1, p(s) <- s
     2: f(s) <- s      //f is the current frontier
     3: for all locality L(i, j) in paralle do

@@ -31,6 +31,7 @@ namespace bfs_simple{
       private:
         std::size_t id;
         std::vector<std::size_t> neighbors;
+        std::size_t level;
         std::size_t parent;
         bool visited;
         
@@ -38,10 +39,6 @@ namespace bfs_simple{
         //why need to add this construct function?
         point(){}
 
-        /*point(std::size_t id_in, std::vector<std::size_t> neighbors_in):
-          id(id_in){
-            neighbors.assign(neighbors_in.begin(), neighbors_in.end());
-          }*/
         //add init function
         void init(std::size_t id_in, std::vector<std::size_t>  neighbors_in){
             id = id_in;
@@ -90,7 +87,7 @@ namespace bfs_simple{
 
   // point(hpx::naming::id_type const&gid, std::size_t id_in, std::vector<std::size_t> neighbors_in):base_type(gid)  {}
 
-   point(hpx::naming::id_type const&gid):base_type(gid)  {}
+  // point(hpx::naming::id_type const&gid):base_type(gid)  {}
 
    void init(std::size_t id_in, std::vector<std::size_t> neighbors_in){
     HPX_ASSERT(this->get_gid());

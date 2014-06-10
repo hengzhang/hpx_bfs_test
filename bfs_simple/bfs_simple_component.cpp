@@ -1,5 +1,5 @@
 
-#include "bfs_component.hpp"
+#include "bfs_simple_component.hpp"
 
 HPX_REGISTER_COMPONENT_MODULE();
 

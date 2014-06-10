@@ -1,4 +1,4 @@
-#include "bfs_component.hpp"
+#include "bfs_simple_component.hpp"
 #include <hpx/hpx.hpp>
 #include <hpx/hpx_init.hpp>
 #include <hpx/components/distributing_factory/distributing_factory.hpp>
@@ -34,7 +34,7 @@
 }*/
 inline void init(hpx::components::server::distributing_factory::iterator_range_type r,  std::vector<bfs_simple::point>& accu){
   BOOST_FOREACH(hpx::naming::id_type const& id, r)
-    accu.push_back(bfs_simple::point(id));
+    accu.push_back(bfs_simple::point());
 }
 
 int hpx_main(boost::program_options::variables_map& vm){
@@ -100,7 +100,11 @@ int hpx_main(boost::program_options::variables_map& vm){
     parents[level].push_back( root ); 
     traverse_phase.push_back( points[root].traverse_async(level,parent) );
 
-    hpx::lcos::wait(traverse_phase,neighbors);
+    //hpx::lcos::wait(traverse_phase,neighbors);
+    hpx::lcos::wait(traverse_phase, 
+        [&](std::size_t, std::vector<std::size_t> t){
+          neighbors.push_back(t);
+        });
 
     for (std::size_t k=1;k<max_levels;k++) {
       traverse_phase.resize(0);
@@ -114,8 +118,14 @@ int hpx_main(boost::program_options::variables_map& vm){
             traverse_phase.push_back(points[ neighbors[i][j] ].traverse_async(k,parent));
           } 
         }
-        hpx::lcos::wait(traverse_phase,alt_neighbors);
+        //hpx::lcos::wait(traverse_phase,alt_neighbors);
         //hpx::wait_all(traverse_phase);
+        hpx::lcos::wait(traverse_phase, 
+            [&](std::size_t, std::vector<std::size_t> t){
+              alt_neighbors.push_back(t);
+        });
+
+
       } else {
         neighbors.resize(0);
         for (std::size_t i=0;i<alt_neighbors.size();i++) {
@@ -132,8 +142,14 @@ int hpx_main(boost::program_options::variables_map& vm){
         }
         hpx::wait_all(barrier);  
         */
-       hpx::lcos::wait(traverse_phase,neighbors);
+       //hpx::lcos::wait(traverse_phase,neighbors);
        // hpx::wait_all(traverse_phase);
+        hpx::lcos::wait(traverse_phase, 
+            [&](std::size_t, std::vector<std::size_t> t){
+              neighbors.push_back(t);
+        });
+
+
       }
     }
     std::cout << "Elapsed time: " << t.elapsed() << " [s]" << std::endl;

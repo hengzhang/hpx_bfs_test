@@ -1,6 +1,7 @@
 #include "bfs_localities_component.hpp"
 #include <hpx/hpx.hpp>
 #include <hpx/hpx_init.hpp>
+#include <hpx/lcos/future_wait.hpp>
 #include <hpx/components/distributing_factory/distributing_factory.hpp>
 #include <hpx/include/actions.hpp>
 #include <hpx/include/lcos.hpp>
@@ -55,8 +56,6 @@ inline bool read_search_node_list(std::string const& searchfile, std::vector<std
   return false;
 }
 
-
-
 int hpx_main(boost::program_options::variables_map& vm){
   {
     hpx::util::high_resolution_timer t_wall;
@@ -94,32 +93,38 @@ int hpx_main(boost::program_options::variables_map& vm){
       std::cout<< searchroots[i]<<std::endl;
     }
 
-    hpx::components::distributing_factory factory;
-    factory.create(hpx::find_here());
-    hpx::components::component_type block_type =  hpx::components::get_component_type<bfs_localities::server::point>();
+    hpx::components::distributing_factory factory =  hpx::components::distributing_factory::create(hpx::find_here());
+    hpx::components::component_type block_type = bfs_localities::server::point::get_component_type();
 
     std::vector<hpx::naming::id_type> localities = hpx::find_all_localities(block_type);
+     std::cout << " Number of localities: " << localities.size() << std::endl;
 
+    std::cout<<"###test 1; vertex_num:"<<vertex_num<<std::endl;
     hpx::components::distributing_factory::result_type blocks =
       factory.create_components(block_type,  vertex_num);
-
-    /* std::vector<hpx::id_type> localities = hpx::find_all_localities();   
-       std::vector<hpx::lcos::future<void> >  futures;
-       futures.reserve(localities.size());
-       BOOST_FOREACH(hpx::naming::id_type const &node, localities){
-       futures.push_back(bfs_localities::point());
-       }*/
+    std::cout<<"###test 1 pass"<<std::endl;
 
     std::vector<hpx::naming::id_type> points;
+    std::cout<<"###test 2"<<std::endl;
     init(hpx::util::locality_results(blocks), points);
+    std::cout<<"###test 2 pass."<<std::endl;
+
+    hpx::util::high_resolution_timer t_init_point;
     {
       std::vector<hpx::lcos::future<void> > init_phase;
       bfs_localities::server::point::init_action  init;
       for(std::size_t i =0; i<vertex_num;i++){
+        std::cout<<"###i:"<<i<<std::endl;
         init_phase.push_back(hpx::async(init, points[i], i, node_neighbors[i]));
       }
       hpx::wait_all(init_phase);
+
+      for(std::size_t i=0;i<vertex_num;i++){
+        std::cout<<"###points.size"<<points.size()<<std::endl;
+      }
     }
+    double time_init_point= t_init_point.elapsed();
+    std::cout << "Elapsed time during init point" << time_init_point<< " (s)"<<std::endl;
 
     /*   std::size_t const os_threads = hpx::get_os_thread_count();
 
@@ -129,25 +134,38 @@ int hpx_main(boost::program_options::variables_map& vm){
          for(std::size_t os_thread =0; os_thread < os_threads; ++os_thread){
          attendance.insert(os_thread);
          }*/
-    std::size_t level = 0; 
-    std::size_t parent = 9999; 
-   // std::vector<std::vector<std::size_t> > parents;
-    std::vector<std::size_t> parents;
-//    for (std::size_t i=0;i<max_levels;i++) {
+    //    for (std::size_t i=0;i<max_levels;i++) {
  //     parents.push_back(std::vector<std::size_t>());
  //  }
-    std::vector<hpx::lcos::future<std::vector<std::size_t> > > traverse_phase;
-    bfs_localities::server::point::traverse_action traverse;
 
     hpx::util::high_resolution_timer t_bfs_all;
+    std::cout<<"###test 3"<<std::endl;
     for(std::size_t i=0;i < searchroots.size();++i) {
+      std::cout<<"###search root :"<<searchroots[i]<<", bfs phase begin."<<std::endl;
+      std::vector<hpx::lcos::future<std::vector<std::size_t> > > traverse_phase;
+      bfs_localities::server::point::traverse_action traverse;
+      std::size_t level = 0; 
+      std::size_t parent = 9999; 
+      // std::vector<std::vector<std::size_t> > parents;
+      std::vector<std::size_t> parents;
+      parents.reserve(vertex_num);
+      for(std::size_t i =0;i<vertex_num;i++){
+        parents[i] = 9999;
+      }
       hpx::util::high_resolution_timer t_bfs;
       std::size_t root = searchroots[i];
       std::vector<std::size_t> visit_queue;
+      visit_queue.reserve(vertex_num);
       std::vector<std::size_t> visited_queue;
+      visited_queue.reserve(vertex_num);
       std::vector<std::vector<std::size_t> > neighbors;
+      for(std::size_t i=0;i<vertex_num;i++) {
+        neighbors.push_back(std::vector<std::size_t>());
+      }
+
       parent = parents[root] =  root ; 
       //  traverse_phase.push_back( points[root].traverse_async(level,parent) );
+      std::cout<<"###test 4"<<std::endl;
       traverse_phase.push_back(hpx::async(traverse, points[root], level, parent) );
       // hpx::wait_all(traverse_phase);
       hpx::lcos::wait(traverse_phase, 
@@ -156,6 +174,7 @@ int hpx_main(boost::program_options::variables_map& vm){
           visit_queue.insert(visit_queue.end(), t.begin(), t.end());
           visited_queue.push_back(root);
           });
+      std::cout<<"###test 4 pass"<<std::endl;
 
       while( visit_queue.size() != 0){
         traverse_phase.resize(0);
@@ -176,8 +195,9 @@ int hpx_main(boost::program_options::variables_map& vm){
       }
       std::cout << "Elapsed time during "<<i<<"th bfs : " << t_bfs.elapsed()<< " (s)"<<std::endl;
     }
-    std::cout << "Elapsed time: " << t_bfs_all.elapsed() << " [s]" << std::endl;
-    std::cout << "Elapsed time: " << t_wall.elapsed() << " [s]" << std::endl;
+    std::cout<<"###test 3 pass. "<<std::endl;
+    std::cout << "Elapsed BFS all time: " << t_bfs_all.elapsed() << " [s]" << std::endl;
+    std::cout << "Elapsed Execution all time: " << t_wall.elapsed() << " [s]" << std::endl;
   }
 
   return hpx::finalize(); // Initiate shutdown of the runtime system.

@@ -8,9 +8,9 @@
 #include <hpx/util/unwrapped.hpp>
 #include <boost/ref.hpp>
 #include <boost/format.hpp>
- #include <boost/lexical_cast.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/split.hpp>
- #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <hpx/lcos/wait_all.hpp>
 #include <boost/foreach.hpp>
@@ -29,7 +29,6 @@ inline std::size_t max_node(std::size_t n1, std::pair<std::size_t, std::size_t> 
   return (std::max)((std::max)(n1, p.first), p.second);
 }
 
-
 inline bool read_edge_list(std::string const& graphfile,std::vector<std::pair<std::size_t, std::size_t> >& edgelist){
   std::ifstream edges(graphfile.c_str());
   if (edges.is_open()) {
@@ -38,7 +37,6 @@ inline bool read_edge_list(std::string const& graphfile,std::vector<std::pair<st
       edgelist.push_back(std::make_pair(node+1, neighbor+1));
     return edges.eof();
   }
-
   std::cerr << " File " << graphfile
     << " not found! Exiting... " << std::endl;
   return false;
@@ -62,7 +60,6 @@ int hpx_main(boost::program_options::variables_map& vm){
 
     std::string const search_file = vm["search_graph"].as<std::string>();
     std::string const edge_file = vm["graph"].as<std::string>();
-
 
     hpx::util::high_resolution_timer t_io;
     std::vector<std::pair<std::size_t, std::size_t> > edgelist;
@@ -99,37 +96,28 @@ int hpx_main(boost::program_options::variables_map& vm){
     std::vector<hpx::naming::id_type> localities = hpx::find_all_localities(block_type);
      std::cout << " Number of localities: " << localities.size() << std::endl;
 
-    std::cout<<"###test 1; vertex_num:"<<vertex_num<<std::endl;
     hpx::components::distributing_factory::result_type blocks =
       factory.create_components(block_type,  vertex_num);
-    std::cout<<"###test 1 pass"<<std::endl;
 
     std::vector<hpx::naming::id_type> points;
-    std::cout<<"###test 2"<<std::endl;
     init(hpx::util::locality_results(blocks), points);
-    std::cout<<"###test 2 pass."<<std::endl;
 
     hpx::util::high_resolution_timer t_init_point;
     {
       std::vector<hpx::lcos::future<void> > init_phase;
       bfs_localities::server::point::init_action  init;
       for(std::size_t i =0; i<vertex_num;i++){
-        std::cout<<"###i:"<<i<<std::endl;
         init_phase.push_back(hpx::async(init, points[i], i, node_neighbors[i]));
       }
       hpx::wait_all(init_phase);
 
       for(std::size_t i=0;i<vertex_num;i++){
-        std::cout<<"###points.size"<<points.size()<<std::endl;
       }
     }
     double time_init_point= t_init_point.elapsed();
     std::cout << "Elapsed time during init point" << time_init_point<< " (s)"<<std::endl;
-
     /*   std::size_t const os_threads = hpx::get_os_thread_count();
-
          hpx::naming::id_type const here = hpx::find_here();
-
          std::set<std::size_t> attendance;
          for(std::size_t os_thread =0; os_thread < os_threads; ++os_thread){
          attendance.insert(os_thread);
@@ -137,11 +125,8 @@ int hpx_main(boost::program_options::variables_map& vm){
     //    for (std::size_t i=0;i<max_levels;i++) {
  //     parents.push_back(std::vector<std::size_t>());
  //  }
-
     hpx::util::high_resolution_timer t_bfs_all;
-    std::cout<<"###test 3"<<std::endl;
     for(std::size_t i=0;i < searchroots.size();++i) {
-      std::cout<<"###search root :"<<searchroots[i]<<", bfs phase begin."<<std::endl;
       std::vector<hpx::lcos::future<std::vector<std::size_t> > > traverse_phase;
       bfs_localities::server::point::traverse_action traverse;
       std::size_t level = 0; 
@@ -165,7 +150,6 @@ int hpx_main(boost::program_options::variables_map& vm){
 
       parent = parents[root] =  root ; 
       //  traverse_phase.push_back( points[root].traverse_async(level,parent) );
-      std::cout<<"###test 4"<<std::endl;
       traverse_phase.push_back(hpx::async(traverse, points[root], level, parent) );
       // hpx::wait_all(traverse_phase);
       hpx::lcos::wait(traverse_phase, 
@@ -174,7 +158,6 @@ int hpx_main(boost::program_options::variables_map& vm){
           visit_queue.insert(visit_queue.end(), t.begin(), t.end());
           visited_queue.push_back(root);
           });
-      std::cout<<"###test 4 pass"<<std::endl;
 
       while( visit_queue.size() != 0){
         traverse_phase.resize(0);
@@ -195,7 +178,6 @@ int hpx_main(boost::program_options::variables_map& vm){
       }
       std::cout << "Elapsed time during "<<i<<"th bfs : " << t_bfs.elapsed()<< " (s)"<<std::endl;
     }
-    std::cout<<"###test 3 pass. "<<std::endl;
     std::cout << "Elapsed BFS all time: " << t_bfs_all.elapsed() << " [s]" << std::endl;
     std::cout << "Elapsed Execution all time: " << t_wall.elapsed() << " [s]" << std::endl;
   }
